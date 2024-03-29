@@ -1,0 +1,25 @@
+{
+  "author": "Silvia O'Dwyer <silviaodwyerdev@gmail.com>",
+  "name": "photon-wasm",
+  "version": "0.1.0",
+  "repository": "https://github.com/silvia-odwyer/photon",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "webpack-dev-server",
+    "build": "webpack"
+  },
+  "bin": {
+    "create-rust-webpack": ".bin/create-rust-webpack.js"
+  },
+  "devDependencies": {
+    "@wasm-tool/wasm-pack-plugin": "0.1.6",
+    "clean-webpack-plugin": "^4.0.0",
+    "css-loader": "^6.10.0",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^5.6.0",
+    "style-loader": "^3.3.4",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
+  }
+}

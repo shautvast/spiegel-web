@@ -1,0 +1,61 @@
+body {
+    background-color: #222;
+}
+
+canvas {
+    width: 50vw;
+}
+
+.main {
+    margin-left: 25%;
+    padding: 0px 10px;
+}
+
+h2,
+h3,
+h4,
+h5 {
+    color: white;
+    font-family: "Roboto", sans-serif;
+    font-weight: 300;
+}
+
+h4 {
+    text-transform: uppercase;
+    font-size: 0.7em;
+    letter-spacing: 4px;
+}
+
+li:hover {
+    cursor: pointer;
+}
+
+.topnav {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.slidecontainer {
+    width: 30%;
+}
+
+.slider {
+    margin-left: 10vw;
+    width: 30vw;
+    height: 25px;
+    background: #d3d3d3;
+    outline: none;
+    transition: opacity 0.2s;
+    cursor: pointer;
+}
+
+.slider:hover {
+    opacity: 0.7;
+}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #04aa6d;
+}
