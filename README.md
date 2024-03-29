@@ -4,4 +4,5 @@ _Spiegel_ image filter project (WIP)
 - wasm
 
 sample output
-![sample](web-client/output.jpg)
+![sample](https://github.com/shautvast/spiegel-web/blob/main/webclient/output.jpg)
+git remote add origin https://github.com/shautvast/spiegel-web.git
