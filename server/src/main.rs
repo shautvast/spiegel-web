@@ -9,9 +9,10 @@ use spiegel_server::{get_closest_color, init};
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     init();
-    let app = Router::new().route("/color/:rgb_hex", get(fetch_nearest_color));
+    let app = Router::new().route("/api/color/:rgb_hex", get(fetch_nearest_color));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    println!("started server on http://0.0.0.0:3000");
     axum::serve(listener, app).await.unwrap();
     Ok(())
 }

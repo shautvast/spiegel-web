@@ -20,10 +20,13 @@ import("../../webclient/pkg").then((module) => {
     let sliderValue = parseInt(event.target.value);
     blur_factor = sliderValue / 5;
     let rust_image = module.open_image(canvas, ctx);
+
     // module.gaussian_blur(rust_image, blur_factor);
-    module.median(rust_image, blur_factor, blur_factor);
-    module.putImageData(canvas, ctx, rust_image);
-    document.getElementById("msg").remove();
+    // module.median(rust_image, blur_factor, blur_factor);
+    module.spiegel(rust_image, blur_factor).then((pi) => {
+      module.putImageData(canvas, ctx, pi);
+      document.getElementById("msg").remove();
+    });
   }
 
   function setUpCanvas() {

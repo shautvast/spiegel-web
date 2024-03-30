@@ -1,8 +1,10 @@
-use std::{collections::HashSet, time::Instant};
+use std::collections::HashSet;
+use std::io::Cursor;
 
+use anyhow::Error;
+use image::io::Reader as ImageReader;
 use image::{GenericImageView, ImageBuffer, Pixel, Rgb, RgbImage, RgbaImage};
 use photon_rs::PhotonImage;
-
 mod quantizer;
 mod samples;
 
@@ -48,7 +50,7 @@ pub fn determine_colors(image: &PhotonImage) -> HashSet<String> {
 }
 
 #[wasm_bindgen]
-pub fn fofo(photon_image: &mut PhotonImage) {
+pub async fn spiegel(photon_image: PhotonImage, median_kernelsize: u32) -> PhotonImage {
     let width = photon_image.get_width();
     let height = photon_image.get_height();
 
@@ -58,23 +60,24 @@ pub fn fofo(photon_image: &mut PhotonImage) {
     // println!("applying gaussian blur filter");
     // let gauss = imageproc::filter::gaussian_blur_f32(&src, 4.0);
     println!("applying median filter");
-    let median = imageproc::filter::median_filter(&rs_image, 20, 20);
+    let median = imageproc::filter::median_filter(&rs_image, median_kernelsize, median_kernelsize);
     println!("applying color quantization filter");
     let quantized = quantizer::quantize(&median, 256);
 
     println!("applying samples");
-    // let out = apply_samples_to_image(quantized, &color_samples);
-    // quantized.save_with_format("output.jpg", image::ImageFormat::Jpeg).unwrap();
+    let out = apply_samples_to_image(quantized).await.into_raw();
+
+    PhotonImage::new(out, width, height)
 }
 
-fn apply_samples_to_image(mut src: RgbImage, color_samples: &Vec<ColorSample>) -> RgbImage {
+async fn apply_samples_to_image(mut src: RgbImage) -> RgbImage {
     let mut imgbuf = RgbImage::new(src.width(), src.height());
     unsafe {
         for y in 0..src.height() {
             for x in 0..src.width() {
                 let pixel = &src.unsafe_get_pixel(x, y);
                 if imgbuf.unsafe_get_pixel(x, y).channels() == [0, 0, 0] {
-                    if let Some(sample) = get_closest(&color_samples, pixel) {
+                    if let Ok(sample) = get_image(pixel).await {
                         fill(&mut src, sample, &mut imgbuf, pixel, x, y);
                     }
                 }
@@ -84,9 +87,29 @@ fn apply_samples_to_image(mut src: RgbImage, color_samples: &Vec<ColorSample>) -
     imgbuf
 }
 
+async fn get_image(pixel: &Rgb<u8>) -> anyhow::Result<RgbImage, Error> {
+    let rgb = format!("{:02X?}{:02X?}{:02X?}", pixel[0], pixel[1], pixel[2]);
+
+    let bytes = reqwest_wasm::get(format!("/api/color/{}", rgb))
+        .await?
+        .bytes()
+        .await?
+        .to_vec();
+
+    Ok(ImageReader::new(Cursor::new(bytes))
+        .with_guessed_format()
+        .unwrap()
+        .decode()?
+        .as_rgb8()
+        .unwrap()
+        .clone())
+
+    // should probably cache it
+}
+
 fn fill(
     src: &mut ImageBuffer<Rgb<u8>, Vec<u8>>,
-    sample: &ColorSample,
+    sample: RgbImage,
     dest: &mut ImageBuffer<Rgb<u8>, Vec<u8>>,
     color: &Rgb<u8>,
     px: u32,
@@ -95,8 +118,8 @@ fn fill(
     if color.channels() == [0, 0, 0] {
         return;
     }
-    let height = sample.image.height();
-    let width = sample.image.width();
+    let height = sample.height();
+    let width = sample.width();
     let mut points = List::new();
     if is_same(src.get_pixel(px, py), &color) {
         points.push(Point { x: px, y: py });
@@ -117,7 +140,7 @@ fn fill(
                     while yy >= height {
                         yy -= height;
                     }
-                    dest.put_pixel(x, y, *sample.image.get_pixel(xx, yy));
+                    dest.put_pixel(x, y, *sample.get_pixel(xx, yy));
                     src.put_pixel(x, y, Rgb([0, 0, 0]));
                     if x > 1 {
                         points.push(Point::new(x - 1, y));

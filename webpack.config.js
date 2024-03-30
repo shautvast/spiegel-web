@@ -40,6 +40,14 @@ var mainConfig = {
   experiments: {
     asyncWebAssembly: true,
   },
+  devServer: {
+    proxy: [
+      {
+        context: ["/api"],
+        target: "http://localhost:3000",
+      },
+    ],
+  },
 };
 
 module.exports = [mainConfig];
