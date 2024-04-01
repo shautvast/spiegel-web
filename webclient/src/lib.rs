@@ -1,10 +1,10 @@
+use anyhow::Error;
+use futures::executor::block_on;
+use image::io::Reader as ImageReader;
+use image::{GenericImageView, ImageBuffer, Pixel, Rgb, RgbImage, Rgba, RgbaImage};
+use photon_rs::PhotonImage;
 use std::collections::HashSet;
 use std::io::Cursor;
-
-use anyhow::Error;
-use image::io::Reader as ImageReader;
-use image::{GenericImageView, ImageBuffer, Pixel, Rgb, RgbImage, RgbaImage};
-use photon_rs::PhotonImage;
 mod quantizer;
 mod samples;
 
@@ -34,51 +34,54 @@ pub fn median(photon_image: &mut PhotonImage, x_radius: u32, y_radius: u32) {
     *photon_image = PhotonImage::new(filtered, width, height);
 }
 
-pub fn determine_colors(image: &PhotonImage) -> HashSet<String> {
-    let mut unique_colors = HashSet::new();
-    let pixels = image.get_raw_pixels();
-    for pix in (0..pixels.len()).step_by(4) {
-        // assume rgba<u8>
-        let mut hex = String::new();
-        hex.push_str(&format!("{:X}", pixels[pix]));
-        hex.push_str(&format!("{:X}", pixels[pix + 1]));
-        hex.push_str(&format!("{:X}", pixels[pix + 2]));
-
-        unique_colors.insert(hex);
-    }
-    unique_colors
-}
-
 #[wasm_bindgen]
-pub async fn spiegel(photon_image: PhotonImage, median_kernelsize: u32) -> PhotonImage {
+pub fn spiegel(photon_image: &mut PhotonImage, median_kernelsize: u32) {
+    // let width = photon_image.get_width();
+    // let height = photon_image.get_height();
+
+    // let raw_pixels = photon_image.get_raw_pixels().to_vec(); //argh!, slice should work but doesn't
+    // let rs_image = RgbImage::from_vec(width, height, raw_pixels).unwrap();
+
+    // // // // println!("applying gaussian blur filter");
+    // // let gauss = imageproc::filter::gaussian_blur_f32(rs_image, 4.0);
+    // // // println!("applying median filter");
+    // let median = imageproc::filter::median_filter(&rs_image, median_kernelsize, median_kernelsize)
+    //     .into_raw();
+    // // // println!("applying color quantization filter");
+    // // // let quantized = quantizer::quantize(&median, 256);
+
+    // // // println!("applying samples");
+    // // let out = block_on(apply_samples_to_image(&mut median));
+
+    // *photon_image = PhotonImage::new(median, width, height);
+    //
     let width = photon_image.get_width();
     let height = photon_image.get_height();
 
+    if width == 0 || height == 0 {
+        return;
+    }
+
     let raw_pixels = photon_image.get_raw_pixels().to_vec(); //argh!, slice should work but doesn't
-    let rs_image = RgbImage::from_vec(width, height, raw_pixels).unwrap();
+    let rs_image = RgbaImage::from_vec(width, height, raw_pixels).unwrap();
 
-    // println!("applying gaussian blur filter");
-    // let gauss = imageproc::filter::gaussian_blur_f32(&src, 4.0);
-    println!("applying median filter");
-    let median = imageproc::filter::median_filter(&rs_image, median_kernelsize, median_kernelsize);
-    println!("applying color quantization filter");
-    let quantized = quantizer::quantize(&median, 256);
+    let mut filtered =
+        imageproc::filter::median_filter(&rs_image, median_kernelsize, median_kernelsize);
+    let out = block_on(apply_samples_to_image(&mut filtered));
 
-    println!("applying samples");
-    let out = apply_samples_to_image(quantized).await.into_raw();
-
-    PhotonImage::new(out, width, height)
+    *photon_image = PhotonImage::new(out.into_raw(), width, height);
 }
 
-async fn apply_samples_to_image(mut src: RgbImage) -> RgbImage {
-    let mut imgbuf = RgbImage::new(src.width(), src.height());
+async fn apply_samples_to_image(src: &mut RgbaImage) -> RgbaImage {
+    log("applying");
+    let mut imgbuf = RgbaImage::new(src.width(), src.height());
     unsafe {
         for y in 0..src.height() {
             for x in 0..src.width() {
                 let pixel = &src.unsafe_get_pixel(x, y);
                 if imgbuf.unsafe_get_pixel(x, y).channels() == [0, 0, 0] {
                     if let Ok(sample) = get_image(pixel).await {
-                        fill(&mut src, sample, &mut imgbuf, pixel, x, y);
+                        fill(src, sample, &mut imgbuf, pixel, x, y);
                     }
                 }
             }
@@ -87,8 +90,27 @@ async fn apply_samples_to_image(mut src: RgbImage) -> RgbImage {
     imgbuf
 }
 
-async fn get_image(pixel: &Rgb<u8>) -> anyhow::Result<RgbImage, Error> {
+#[wasm_bindgen]
+extern "C" {
+    // Use `js_namespace` here to bind `console.log(..)` instead of just
+    // `log(..)`
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+
+    // The `console.log` is quite polymorphic, so we can bind it with multiple
+    // signatures. Note that we need to use `js_name` to ensure we always call
+    // `log` in JS.
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn log_u32(a: u32);
+
+    // Multiple arguments too!
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn log_many(a: &str, b: &str);
+}
+
+async fn get_image(pixel: &Rgba<u8>) -> anyhow::Result<RgbaImage, Error> {
     let rgb = format!("{:02X?}{:02X?}{:02X?}", pixel[0], pixel[1], pixel[2]);
+    log(&format!("get {}", rgb));
 
     let bytes = reqwest_wasm::get(format!("/api/color/{}", rgb))
         .await?
@@ -100,7 +122,7 @@ async fn get_image(pixel: &Rgb<u8>) -> anyhow::Result<RgbImage, Error> {
         .with_guessed_format()
         .unwrap()
         .decode()?
-        .as_rgb8()
+        .as_rgba8()
         .unwrap()
         .clone())
 
@@ -108,14 +130,14 @@ async fn get_image(pixel: &Rgb<u8>) -> anyhow::Result<RgbImage, Error> {
 }
 
 fn fill(
-    src: &mut ImageBuffer<Rgb<u8>, Vec<u8>>,
-    sample: RgbImage,
-    dest: &mut ImageBuffer<Rgb<u8>, Vec<u8>>,
-    color: &Rgb<u8>,
+    src: &mut RgbaImage,
+    sample: RgbaImage,
+    dest: &mut RgbaImage,
+    color: &Rgba<u8>,
     px: u32,
     py: u32,
 ) {
-    if color.channels() == [0, 0, 0] {
+    if color.channels() == [0, 0, 0, 0] {
         return;
     }
     let height = sample.height();
@@ -141,7 +163,7 @@ fn fill(
                         yy -= height;
                     }
                     dest.put_pixel(x, y, *sample.get_pixel(xx, yy));
-                    src.put_pixel(x, y, Rgb([0, 0, 0]));
+                    src.put_pixel(x, y, Rgba([0, 0, 0, 0]));
                     if x > 1 {
                         points.push(Point::new(x - 1, y));
                     }
@@ -163,7 +185,7 @@ fn fill(
     }
 }
 
-fn is_same(p1: &Rgb<u8>, p2: &Rgb<u8>) -> bool {
+fn is_same(p1: &Rgba<u8>, p2: &Rgba<u8>) -> bool {
     let p1 = p1.channels();
     let p2 = p2.channels();
     i16::abs(p1[0] as i16 - p2[0] as i16) < 4
@@ -171,27 +193,11 @@ fn is_same(p1: &Rgb<u8>, p2: &Rgb<u8>) -> bool {
         && i16::abs(p1[2] as i16 - p2[2] as i16) < 4
 }
 
-fn get_closest<'a>(
-    color_samples: &'a Vec<ColorSample>,
-    pixel: &Rgb<u8>,
-) -> Option<&'a ColorSample> {
-    let mut closest = None;
-    let mut min_diff: f32 = 4294967295.0; //0xFFFFFFFF
-    for sample in color_samples {
-        let diff = get_distance(sample.r, sample.g, sample.b, pixel);
-        if diff < min_diff {
-            closest = Some(sample);
-            min_diff = diff;
-        }
-    }
-
-    closest
-}
-
-fn get_distance(r: u8, g: u8, b: u8, c2: &Rgb<u8>) -> f32 {
+fn get_distance(r: u8, g: u8, b: u8, c2: &Rgba<u8>) -> f32 {
     let red_dif = r as f32 - c2.channels()[0] as f32;
     let green_dif = g as f32 - c2.channels()[1] as f32;
     let blue_dif = b as f32 - c2.channels()[2] as f32;
+    // ignore alpha channel
     return f32::sqrt(red_dif * red_dif + green_dif * green_dif + blue_dif * blue_dif);
 }
 

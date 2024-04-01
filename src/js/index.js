@@ -23,10 +23,13 @@ import("../../webclient/pkg").then((module) => {
 
     // module.gaussian_blur(rust_image, blur_factor);
     // module.median(rust_image, blur_factor, blur_factor);
-    module.spiegel(rust_image, blur_factor).then((pi) => {
-      module.putImageData(canvas, ctx, pi);
-      document.getElementById("msg").remove();
-    });
+
+    module.spiegel(rust_image, blur_factor);
+    module.putImageData(canvas, ctx, rust_image);
+    const msg = document.getElementById("msg");
+    if (msg) {
+      msg.remove();
+    }
   }
 
   function setUpCanvas() {
