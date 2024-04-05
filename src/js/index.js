@@ -17,6 +17,7 @@ import("../../webclient/pkg").then((module) => {
   slider.value = 0;
 
   function filterImage(event) {
+    ctx.drawImage(sourceImage, 0, 0);
     let sliderValue = parseInt(event.target.value);
     blur_factor = sliderValue / 5;
     let rust_image = module.open_image(canvas, ctx);
@@ -26,10 +27,13 @@ import("../../webclient/pkg").then((module) => {
 
     module.spiegel(rust_image, blur_factor);
     module.putImageData(canvas, ctx, rust_image);
-    const msg = document.getElementById("msg");
-    if (msg) {
-      msg.remove();
-    }
+    const image_container = document.getElementById("image_container");
+    let rect = image_container.getBoundingClientRect();
+    canvas.setAttribute(
+      "style",
+      `visibility:visible;position:absolute;top:${rect.top};z-index:100`,
+    );
+    // image_container.setAttribute("style", "visibility:hidden");
   }
 
   function setUpCanvas() {
