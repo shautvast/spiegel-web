@@ -1,8 +1,8 @@
 {
-  "author": "Silvia O'Dwyer <silviaodwyerdev@gmail.com>",
-  "name": "photon-wasm",
-  "version": "0.1.0",
-  "repository": "https://github.com/silvia-odwyer/photon",
+  "author": "Sander Hautvast",
+  "name": "Klaer Lightende Spiegel der Verfkonst",
+  "version": "1.0.0",
+  "repository": "https://github.com/shautvast/spiegel-web",
   "license": "Apache-2.0",
   "scripts": {
     "start": "webpack-dev-server",
