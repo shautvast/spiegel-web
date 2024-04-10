@@ -21,9 +21,13 @@ var mainConfig = {
         use: ["style-loader", "css-loader"],
       },
       {
-        test: /\.(png|svg|jpg|gif)$/,
-        use: ["file-loader"],
+        test: /\.(jpg|png|svg|gif)$/,
+        type: "asset/resource",
       },
+      // {
+      //   test: /\.(png|svg|jpg|gif)$/,
+      //   use: ["file-loader"],
+      // },
     ],
   },
   plugins: [

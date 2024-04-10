@@ -2,29 +2,59 @@
 <html>
 
 <head>
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
     <title>Spiegel</title>
+    <link rel="stylesheet" href="/css/styles.css">
 </head>
 
 <body>
-    <div class="main">
-        <label>
-            <h2>Blur factor</h2>
-            <h4 id="msg">(blurring can take up to 15 seconds, please be patient)</h4>
-        </label>
-        <div class="slidecontainer">
-            <input type="range" id="slider" value="0" min="0" max="100" class="slider" />
-        </div>
-        </label>
-        <div class="main_content">
-            <div id="progress"></div>
-            <div class="content" id="images">
-                <div id="image_container"></div>
+<h1>Klaer Lightende Spiegel der Verfkonst</h1>
+<h4>Paints your image in the colors of the
+    <a class="link" target="_blank"
+       href="https://nl.wikipedia.org/wiki/Klaer_Lightende_Spiegel_der_Verfkonst">handpainted
+        book by A. Boogert</a>,
+    <img id="spieghel" alt="spieghel" src="" class="hide">
+    the 1692 version of the Pantone color book.</h4>
 
-                <canvas id="canvas" style="visibility: hidden;"></canvas>
-            </div>
+<div class="main">
+
+    <label>
+        <h4>Upload or drag&drop a picture and move the slider, for a quick preview</h4>
+        <h4>Then press Apply</h4>
+
+    </label>
+    <div><input id="upload" type="file" accept="image/jpeg"></div>
+    <div id="slidecontainer" class="hide">
+        <label for="slider">Brush stroke size</label><input type="range" id="slider" value="0" min="0" max="100" class="slider"/>
+        <button id="apply">Apply</button>
+    </div>
+    </label>
+    <div class="main-content">
+        <div class="content" id="images">
+            <div id="image-container" class="border" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+
+            <canvas id="canvas" style="visibility: hidden;"></canvas>
         </div>
     </div>
+    <h4>(Painting can take long, be patient</h4>
+    <h4>all image processing is done in your browser)</h4>
+</div>
+<script>
+    function allowDrop(event) {
+        event.preventDefault();
+    }
+
+    function drop(event) {
+        event.preventDefault();
+        let dt = event.dataTransfer;
+
+        console.log(dt.files);
+
+        document.querySelector("#source-image").src = URL.createObjectURL(dt.files[0]);
+        document.querySelector('#image-container').setAttribute("class", "no-border");
+        document.querySelector("#slidecontainer").setAttribute("class", "slidecontainer");
+    }
+</script>
 </body>
 
 </html>

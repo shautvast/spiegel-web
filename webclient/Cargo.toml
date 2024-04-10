@@ -7,14 +7,15 @@ version = "0.1.0"
 
 [dependencies]
 log = "0.4"
-image = "0.24.1"
-imageproc = "0.23"
+image = "0.25"
+imageproc = "0.24"
 hex = "0.4"
 anyhow = "1.0"
 photon-rs = { version = "0.3.2", default-features = false }
 console_error_panic_hook = { version = "0.1.7", optional = true }
 wasm-bindgen = "0.2.78"
 include_dir = "0.7.3"
+web-sys = "0.3.55"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

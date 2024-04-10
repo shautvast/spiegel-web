@@ -1,64 +1,45 @@
 use image::{GenericImage, GenericImageView, Pixel, Rgba, RgbaImage};
 use photon_rs::PhotonImage;
 use std::collections::LinkedList;
-mod quantizer;
+use image::imageops::FilterType;
+
 mod samples;
 
 use samples::log;
 use wasm_bindgen::prelude::*;
+
 static BLACK: Rgba<u8> = Rgba([0, 0, 0, 0]);
 
-/// Apply a median filter
-///
-///  # Arguments
-/// * `img` - A PhotonImage.
-/// * `x_radius` - x radius of median window
-/// * `y_radius` - y radius of median window
 #[wasm_bindgen]
-pub fn median(photon_image: &mut PhotonImage, x_radius: u32, y_radius: u32) {
+pub fn spiegel(photon_image: PhotonImage, median_kernelsize: u32, preview: bool) -> PhotonImage {
+    samples::read_jpeg_bytes();
+
     let width = photon_image.get_width();
     let height = photon_image.get_height();
 
-    if width == 0 || height == 0 {
-        return;
-    }
+    let raw_pixels = photon_image.get_raw_pixels().to_vec();
+    let i1 = RgbaImage::from_vec(width, height, raw_pixels).unwrap();
 
-    let raw_pixels = photon_image.get_raw_pixels().to_vec(); //argh!, slice should work but doesn't
-    let rs_image = RgbaImage::from_vec(width, height, raw_pixels).unwrap();
-
-    let filtered: Vec<u8> =
-        imageproc::filter::median_filter(&rs_image, x_radius, y_radius).into_raw();
-
-    *photon_image = PhotonImage::new(filtered, width, height);
-}
-
-#[wasm_bindgen]
-pub fn spiegel(photon_image: &mut PhotonImage, median_kernelsize: u32) {
-    let width = photon_image.get_width();
-    let height = photon_image.get_height();
-
-    if width == 0 || height == 0 {
-        return;
-    }
-    samples::init();
-    let raw_pixels = photon_image.get_raw_pixels().to_vec(); //argh!, slice should work but doesn't
-    let out = RgbaImage::from_vec(width, height, raw_pixels).unwrap();
-    log(&format!("stort"));
-    // let out = imageproc::filter::gaussian_blur_f32(&rs_image, 3.0);
-    // log(&format!("gaussian done"));
-    // let mut out = quantizer::quantize(&out, 256);
-    let mut out = imageproc::filter::median_filter(&out, median_kernelsize, median_kernelsize);
-    //
-    log(&format!("median done"));
-    let out = apply_samples_to_image(&mut out);
-    log(&format!("applying done"));
-    *photon_image = PhotonImage::new(out.into_raw(), width, height);
+    let i2 = if preview {
+        image::imageops::resize(&i1, u32::min(500, width >> 1), u32::min(500, height >> 1), FilterType::Nearest)
+    } else {
+        image::imageops::resize(&i1, u32::min(500, width), u32::min(500, height), FilterType::Nearest)
+    };
+    let mut i3 = imageproc::filter::median_filter(&i2, median_kernelsize, median_kernelsize);
+    let i4 = if !preview {
+        apply_samples_to_image(&mut i3)
+    } else {
+        i3
+    };
+    let i5 = image::imageops::resize(&i4, width, height, FilterType::Nearest);
+    PhotonImage::new(i5.into_raw(), width, height)
 }
 
 fn apply_samples_to_image(src: &mut RgbaImage) -> RgbaImage {
     let mut out = RgbaImage::new(src.width(), src.height());
     unsafe {
         for y in 0..src.height() {
+            log(&format!("{}", y));
             for x in 0..src.width() {
                 if out.unsafe_get_pixel(x, y) == BLACK {
                     let pixel = src.unsafe_get_pixel(x, y);

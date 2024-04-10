@@ -7,7 +7,7 @@ use include_dir::{include_dir, Dir, DirEntry};
 static mut SAMPLES: OnceLock<Vec<ColorSample>> = OnceLock::new();
 static SAMPLES_DIR: Dir = include_dir!("src/samples");
 
-pub fn init() {
+pub fn read_jpeg_bytes() {
     unsafe {
         SAMPLES.get_or_init(|| {
             log("reading image samples");

@@ -1,23 +1,45 @@
 body {
-    background-color: #222;
+    background-color: #eee;
 }
 
 canvas {
     width: 50vw;
+    position: absolute;
 }
 
 .main {
     margin-left: 25%;
-    padding: 0px 10px;
+    padding: 10px;
 }
 
+.border {
+    border: 5px dashed black;
+    width: 50vw;
+    height: 50vh;
+}
+
+.no-border {
+    border: none;
+}
+
+
+body h4, body h1 {
+    text-align: center;
+}
+
+div h4 {
+    text-align: left;
+}
+
+label,
+h1,
 h2,
 h3,
 h4,
 h5 {
-    color: white;
+    color: black;
     font-family: "Roboto", sans-serif;
-    font-weight: 300;
+    font-weight: 400;
 }
 
 h4 {
@@ -26,36 +48,45 @@ h4 {
     letter-spacing: 4px;
 }
 
+.hide {
+    display: none;
+}
+
+.show {
+    display: block;
+}
+
+.link:hover + .hide {
+    display: flow;
+    position: absolute;
+    top: 10vh;
+    left: 20vw;
+}
+
 li:hover {
     cursor: pointer;
 }
 
-.topnav {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-}
-
 .slidecontainer {
-    width: 30%;
+    align-items: center;
+    display: flex;
 }
 
 .slider {
-    margin-left: 10vw;
     width: 30vw;
     height: 25px;
-    background: #d3d3d3;
+    background: #f3f3f3;
     outline: none;
     transition: opacity 0.2s;
     cursor: pointer;
 }
 
 .slider:hover {
-    opacity: 0.7;
+    opacity: 0.4;
 }
 
 .slider::-moz-range-thumb {
     width: 25px;
     height: 25px;
-    background: #04aa6d;
+    background: #777;
 }
