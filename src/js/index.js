@@ -1,5 +1,6 @@
 import "../css/styles.css";
 import spiegel from '../img/spieghel.jpg';
+import browserwarning from '../img/browserwarning.png';
 
 let canvas, ctx, originalWidth, originalHeight, canvasTop, strokeSize=1;
 
@@ -32,6 +33,8 @@ import("../../image-processor/pkg").then((module) => {
 
 });
 document.querySelector("#spieghel").src = spiegel;
+document.querySelector("#browserwarning").src = browserwarning;
+
 const sourceImage = new Image();
 sourceImage.id = "source-image";
 let element = document.querySelector("#image-container");
