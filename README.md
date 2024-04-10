@@ -4,4 +4,4 @@
 - wasm
 
 sample output
-![sample](https://github.com/shautvast/spiegel-web/blob/unsplash.png)
+![sample](https://github.com/shautvast/spiegel-web/blob/main/unsplash.png)
