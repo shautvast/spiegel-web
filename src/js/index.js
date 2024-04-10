@@ -3,7 +3,7 @@ import spiegel from '../img/spieghel.jpg';
 
 let canvas, ctx, originalWidth, originalHeight, canvasTop, strokeSize=1;
 
-import("../../webclient/pkg").then((module) => {
+import("../../image-processor/pkg").then((module) => {
     const slider = document.querySelector("#slider");
     slider.onchange = (event) => {
         strokeSize = parseInt(event.target.value) / 5;

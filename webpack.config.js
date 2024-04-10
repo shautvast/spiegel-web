@@ -36,7 +36,7 @@ var mainConfig = {
     }),
 
     new WasmPackPlugin({
-      crateDirectory: path.resolve(__dirname, "webclient"),
+      crateDirectory: path.resolve(__dirname, "image-processor"),
       // WasmPackPlugin defaults to compiling in "dev" profile. To change that, use forceMode: 'release':
       forceMode: "release",
     }),
